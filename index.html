@@ -356,12 +356,6 @@
             }
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
         .confetti {
             position: fixed;
             width: 10px;
@@ -420,6 +414,7 @@
             font-size: 0.85rem;
             font-weight: 600;
             color: #ffd966;
+            transition: all 0.2s;
         }
 
         @media (max-width: 600px) {
@@ -440,10 +435,10 @@
     <!-- 3D Canvas Background -->
     <canvas id="canvas-bg"></canvas>
 
-    <!-- Music Control -->
+    <!-- Music Control - will auto play on first tap anywhere -->
     <div id="musicControl" class="music-control">
         <i class="fas fa-music"></i>
-        <span id="musicStatus">Play Nasheed</span>
+        <span id="musicStatus">🔊 Play Nasheed</span>
     </div>
 
     <!-- Main Container -->
@@ -625,12 +620,11 @@
         });
     </script>
 
-    <!-- Main Application Script with ZeCloud WebSocket Integration -->
+    <!-- Main Application Script with ZeCloud WebSocket & Auto-play Music on First Tap -->
     <script>
         // ---------- ZeCloud WebSocket Configuration ----------
         const APP_ID = "1707543923";
         const APP_SIGN = "66c843c31ceee2289e7e00ae3630df216af75651dc95227ca4626775a860d5a5";
-        // Use the WebSocket URL provided (with token)
         const WS_URL = "wss://webliveroom1707543923-api.coolzcloud.com/ws1f62c3e05d6a862f05e72570082c53fa66c843c31ceee2289e7e00ae3630df216af75651dc95227ca4626775a860d5a566c843c31ceee2289e7e00ae3630df21";
         
         let ws = null;
@@ -638,14 +632,11 @@
         
         function connectWebSocket() {
             if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
-            
             ws = new WebSocket(WS_URL);
-            
             ws.onopen = () => {
                 console.log("✅ ZeCloud WebSocket connected");
                 wsConnected = true;
                 updateLiveStatus("Connected to live room", true);
-                // Optional: Send a join message with app sign if required
                 try {
                     ws.send(JSON.stringify({
                         type: "join",
@@ -653,15 +644,13 @@
                         appSign: APP_SIGN,
                         userId: "web_visitor_" + Date.now()
                     }));
-                } catch(e) { console.log("Join message send error", e); }
+                } catch(e) { console.log("Join message error", e); }
             };
-            
             ws.onerror = (error) => {
                 console.error("WebSocket error:", error);
                 wsConnected = false;
                 updateLiveStatus("Connection failed. Message will be sent via WhatsApp only.", false);
             };
-            
             ws.onclose = () => {
                 console.log("WebSocket disconnected");
                 wsConnected = false;
@@ -680,18 +669,11 @@
             }
         }
         
-        // Send a message to the ZeCloud live room
         function sendLiveMessage(name, gender) {
-            if (!wsConnected) {
-                console.log("WebSocket not connected, skipping live message");
-                return;
-            }
-            
+            if (!wsConnected) return;
             const messageText = gender === 'female' 
                 ? `💖 ${name} just joined and received a special love gift! Eid Mubarak! 💖`
                 : `🎉 ${name} joined the Eid celebration! Eid Mubarak! 🎉`;
-            
-            // Payload according to typical ZeCloud API structure (may need adjustment)
             const payload = {
                 appId: APP_ID,
                 appSign: APP_SIGN,
@@ -704,50 +686,35 @@
                     timestamp: new Date().toISOString()
                 }
             };
-            
             try {
                 ws.send(JSON.stringify(payload));
-                console.log("Live message sent:", payload);
+                console.log("Live message sent");
             } catch (err) {
                 console.error("Failed to send live message:", err);
             }
         }
         
-        // ---------- IMPROVED WHATSAPP SENDING ----------
-        const WHATSAPP_NUMBER = '923426871695'; // Pakistan format without '+'
-        
+        // WhatsApp
+        const WHATSAPP_NUMBER = '923426871695';
         function sendWhatsAppMessage(name, gender) {
             const message = `🎉 *Eid Mubarak!* 🎉\n\n*Name:* ${name}\n*Gender:* ${gender === 'female' ? '👩 Female' : '👨 Male'}\n*Message:* Thank you for visiting the Eid Love Gift Experience!\n*Developer:* Muhammad Abdullah Developer\n\n✨ May Allah bless you with happiness, love, and prosperity! ✨\n\n💝 Special Love Gift for ${gender === 'female' ? 'our lovely sister' : 'you'} 💝`;
             const encodedMessage = encodeURIComponent(message);
-            
-            // Method 1: Use wa.me URL (works on mobile)
             const waMeUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-            
-            // Method 2: Use api.whatsapp.com (works on desktop)
             const apiUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedMessage}`;
-            
-            // Try to open in a new tab
             const newWindow = window.open(waMeUrl, '_blank');
-            
-            // If popup blocked, try the other method
             if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
                 window.open(apiUrl, '_blank');
             }
-            
-            // Fallback: Copy to clipboard and alert if both fail (though unlikely)
             setTimeout(() => {
                 if (!newWindow) {
                     navigator.clipboard.writeText(`WhatsApp: ${WHATSAPP_NUMBER}\nMessage: ${decodeURIComponent(encodedMessage)}`).then(() => {
-                        alert("WhatsApp message copied to clipboard! Please open WhatsApp and paste the message.");
+                        alert("WhatsApp message copied to clipboard!");
                     });
                 }
             }, 500);
-            
-            console.log(`WhatsApp message sent to ${WHATSAPP_NUMBER} for ${name}`);
         }
         
-        // ---------- Existing Logic (Gender, Form, Fingerprint, Gift) ----------
-        // Elements
+        // ---------- Interactive Logic ----------
         const landingPage = document.getElementById('landingPage');
         const genderSection = document.getElementById('genderSection');
         const formSection = document.getElementById('formSection');
@@ -765,7 +732,6 @@
         let currentGender = '';
         let fingerprintVerified = false;
         
-        // Confetti and Hearts
         function createConfetti() {
             for (let i = 0; i < 100; i++) {
                 const confetti = document.createElement('div');
@@ -796,32 +762,15 @@
             }
         }
         
-        // Love Gift for girls
         function showLoveGift(name) {
             const loveModal = document.getElementById('loveGiftModal');
             const loveMessage = document.getElementById('loveGiftMessage');
             const romanticMessages = [
-                `💕 My Dearest ${name}, 💕<br><br>
-                On this blessed Eid, I pray that your heart is filled with as much love and joy as you bring to others. 
-                You are a precious gem, and may Allah bless you with a love that is pure, eternal, and beautiful.<br><br>
-                🌹 *A Special Rose for You* 🌹<br>
-                May your life bloom with happiness!`,
-                `✨ *To the Beautiful ${name},* ✨<br><br>
-                Your smile lights up the world like the moon lights up the night sky. 
-                This Eid, I pray that you find the love you deserve - a love that is kind, gentle, and everlasting.<br><br>
-                💎 *You are precious!* 💎`,
-                `🌙 *For the Lovely ${name},* 🌙<br><br>
-                Like the stars that shine brightest in the darkest night, your beauty and kindness shine through everything you do.
-                May Allah grant you a love story as beautiful as your soul.<br><br>
-                💝 *Wrapped with Love and Prayers* 💝`,
-                `🌸 *Dearest ${name},* 🌸<br><br>
-                On this blessed day, I ask Allah to send someone who will love you for who you are, 
-                appreciate your worth, and cherish you forever. You deserve nothing but the best!<br><br>
-                💖 *A Heart Full of Prayers for You* 💖`,
-                `💫 *To the Amazing ${name},* 💫<br><br>
-                Your presence makes the world more beautiful. May Allah bless you with a love that is patient, 
-                kind, and true. May your heart always find joy and your soul always find peace.<br><br>
-                🎀 *A Special Gift of Love* 🎀`
+                `💕 My Dearest ${name}, 💕<br><br>On this blessed Eid, I pray that your heart is filled with as much love and joy as you bring to others. You are a precious gem, and may Allah bless you with a love that is pure, eternal, and beautiful.<br><br>🌹 *A Special Rose for You* 🌹<br>May your life bloom with happiness!`,
+                `✨ *To the Beautiful ${name},* ✨<br><br>Your smile lights up the world like the moon lights up the night sky. This Eid, I pray that you find the love you deserve - a love that is kind, gentle, and everlasting.<br><br>💎 *You are precious!* 💎`,
+                `🌙 *For the Lovely ${name},* 🌙<br><br>Like the stars that shine brightest in the darkest night, your beauty and kindness shine through everything you do. May Allah grant you a love story as beautiful as your soul.<br><br>💝 *Wrapped with Love and Prayers* 💝`,
+                `🌸 *Dearest ${name},* 🌸<br><br>On this blessed day, I ask Allah to send someone who will love you for who you are, appreciate your worth, and cherish you forever. You deserve nothing but the best!<br><br>💖 *A Heart Full of Prayers for You* 💖`,
+                `💫 *To the Amazing ${name},* 💫<br><br>Your presence makes the world more beautiful. May Allah bless you with a love that is patient, kind, and true. May your heart always find joy and your soul always find peace.<br><br>🎀 *A Special Gift of Love* 🎀`
             ];
             const randomIndex = Math.floor(Math.random() * romanticMessages.length);
             loveMessage.innerHTML = romanticMessages[randomIndex] + `<br><br><i class="fas fa-heart" style="color: #ff6b6b;"></i> <strong>Eid Mubarak, ${name}!</strong> <i class="fas fa-heart" style="color: #ff6b6b;"></i>`;
@@ -830,12 +779,9 @@
             createConfetti();
         }
         
-        function closeLoveGift() {
-            document.getElementById('loveGiftModal').style.display = 'none';
-        }
+        function closeLoveGift() { document.getElementById('loveGiftModal').style.display = 'none'; }
         window.closeLoveGift = closeLoveGift;
         
-        // Show personalized letter
         function showLetter(name, gender) {
             const letterContent = document.getElementById('letterContent');
             const currentDate = new Date().toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -860,7 +806,6 @@
             }
         }
         
-        // Gender selection
         let selectedGender = null;
         const genderBtns = document.querySelectorAll('.gender-btn');
         genderBtns.forEach(btn => {
@@ -872,18 +817,13 @@
         });
         
         genderNextBtn.addEventListener('click', () => {
-            if (!selectedGender) {
-                alert('Please select your gender');
-                return;
-            }
+            if (!selectedGender) { alert('Please select your gender'); return; }
             currentGender = selectedGender;
             genderSection.style.display = 'none';
             formSection.style.display = 'block';
-            // Connect WebSocket when form is shown
             connectWebSocket();
         });
         
-        // Fingerprint verification
         function verifyFingerprint() {
             fingerprintIcon.classList.add('active');
             document.getElementById('fingerprintStatus').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
@@ -896,18 +836,14 @@
                     letterSection.style.display = 'block';
                     showLetter(currentUserName, currentGender);
                     createConfetti();
-                    // Send messages after verification
                     sendWhatsAppMessage(currentUserName, currentGender);
                     sendLiveMessage(currentUserName, currentGender);
                 }, 800);
             }, 1500);
         }
         
-        fingerprintIcon.addEventListener('click', () => {
-            if (!fingerprintVerified) verifyFingerprint();
-        });
+        fingerprintIcon.addEventListener('click', () => { if (!fingerprintVerified) verifyFingerprint(); });
         
-        // Start experience
         function startExperience() {
             landingPage.style.display = 'none';
             genderSection.style.display = 'block';
@@ -915,112 +851,16 @@
         startBtn.addEventListener('click', startExperience);
         startGiftBtn.addEventListener('click', startExperience);
         
-        // Submit name
         submitNameBtn.addEventListener('click', () => {
             const name = userNameInput.value.trim();
-            if (name === '') {
+            if (name === '' || name.length < 2) {
                 userNameInput.style.borderColor = '#ff6666';
-                userNameInput.classList.add('shake-animation');
-                setTimeout(() => {
-                    userNameInput.style.borderColor = '';
-                    userNameInput.classList.remove('shake-animation');
-                }, 300);
-                return;
-            }
-            if (name.length < 2) {
-                alert('Please enter a valid name (at least 2 characters)');
+                setTimeout(() => userNameInput.style.borderColor = '', 300);
                 return;
             }
             currentUserName = name;
             formSection.style.display = 'none';
             fingerprintSection.style.display = 'block';
-            fingerprintSection.style.animation = 'fadeIn 0.5s ease';
-            fingerprintIcon.classList.add('glow-animation');
-            setTimeout(() => fingerprintIcon.classList.remove('glow-animation'), 1000);
         });
         
-        userNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') submitNameBtn.click();
-        });
-        
-        // Final gift button
-        finalGiftBtn.addEventListener('click', () => {
-            finalGiftBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening Gift...';
-            finalGiftBtn.disabled = true;
-            createConfetti();
-            setTimeout(() => createConfetti(), 200);
-            setTimeout(() => createConfetti(), 400);
-            const letterCard = document.querySelector('.letter-card');
-            letterCard.style.transform = 'scale(1.02)';
-            setTimeout(() => letterCard.style.transform = 'scale(1)', 300);
-            setTimeout(() => {
-                if (currentGender === 'female') {
-                    showLoveGift(currentUserName);
-                    finalGiftBtn.innerHTML = '<i class="fas fa-heart"></i> Love Gift Delivered! 💝 <i class="fas fa-heart"></i>';
-                } else {
-                    const giftMessage = document.createElement('div');
-                    giftMessage.innerHTML = `
-                        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 2rem; border-radius: 2rem; text-align: center; z-index: 1000; border: 2px solid #ffd966; animation: fadeInUp 0.5s ease;">
-                            <i class="fas fa-gift" style="font-size: 3rem; color: #ffd966;"></i>
-                            <h3 style="margin-top: 1rem;">🎁 Your Gift is Ready! 🎁</h3>
-                            <p style="margin: 1rem 0;">May Allah bless you with:</p>
-                            <p>✨ Happiness ✨ Health ✨ Success ✨</p>
-                            <p style="margin-top: 1rem; color: #ffd966;">Eid Mubarak, ${currentUserName}!</p>
-                            <button id="closeGiftBtn" style="margin-top: 1rem; padding: 0.5rem 1.5rem; background: #ffd966; border: none; border-radius: 2rem; cursor: pointer;">Close</button>
-                        </div>
-                    `;
-                    document.body.appendChild(giftMessage);
-                    document.getElementById('closeGiftBtn').addEventListener('click', () => giftMessage.remove());
-                    finalGiftBtn.innerHTML = '<i class="fas fa-gift"></i> Gift Opened! 🎉 <i class="fas fa-gift"></i>';
-                    setTimeout(() => { if (giftMessage.parentNode) giftMessage.remove(); }, 5000);
-                }
-                finalGiftBtn.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
-            }, 800);
-        });
-        
-        // Music - Fixed with working MP3 URL
-        const audio = new Audio();
-        // Royalty-free Eid Nasheed (Pixabay)
-        audio.src = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_2c6f3a2f6a.mp3?filename=arabic-nasheed-111010.mp3";
-        audio.loop = true;
-        let musicPlaying = false;
-        const musicBtn = document.getElementById('musicControl');
-        const musicStatus = document.getElementById('musicStatus');
-        
-        function toggleMusic() {
-            if (musicPlaying) {
-                audio.pause();
-                musicStatus.innerHTML = '<i class="fas fa-play"></i> Play Nasheed';
-                musicBtn.style.background = "rgba(0,0,0,0.7)";
-                musicPlaying = false;
-            } else {
-                audio.play().then(() => {
-                    musicPlaying = true;
-                    musicStatus.innerHTML = '<i class="fas fa-pause"></i> Playing...';
-                    musicBtn.style.background = "rgba(255,215,0,0.2)";
-                }).catch(err => {
-                    console.log("Autoplay blocked. Click music button.");
-                    musicStatus.innerHTML = '<i class="fas fa-music"></i> Click to Play';
-                });
-            }
-        }
-        
-        musicBtn.addEventListener('click', toggleMusic);
-        
-        // Auto-start music on first user interaction (click anywhere)
-        document.body.addEventListener('click', function initAudio() {
-            if (!musicPlaying) {
-                audio.play().then(() => {
-                    musicPlaying = true;
-                    musicStatus.innerHTML = '<i class="fas fa-pause"></i> Playing...';
-                    musicBtn.style.background = "rgba(255,215,0,0.2)";
-                }).catch(() => {});
-            }
-        }, { once: true });
-        
-        console.log('%c✨ Eid Mubarak from Muhammad Abdullah Developer! ✨', 'color: #ffd966; font-size: 16px; font-weight: bold;');
-        console.log('%c💝 ZeCloud WebSocket integrated for live messages 💝', 'color: #ff6b6b; font-size: 14px;');
-        console.log('%c📱 WhatsApp number: ' + WHATSAPP_NUMBER, 'color: #4caf50; font-size: 12px;');
-    </script>
-</body>
-</html>
+        userNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitNameBtn.click();
