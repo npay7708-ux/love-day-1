@@ -111,7 +111,7 @@
             margin-top: 1.5rem;
         }
         
-        /* New YouTube Song Button */
+        /* YouTube Button */
         .btn-youtube {
             background: linear-gradient(135deg, #ff0000, #cc0000);
             border: none;
@@ -125,7 +125,7 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             margin-bottom: 0.5rem;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
@@ -478,8 +478,8 @@
                 <button class="btn-primary" id="startBtn">
                     <i class="fas fa-star"></i> Open Your Gift <i class="fas fa-star"></i>
                 </button>
-                <!-- New YouTube Song Button -->
-                <button class="btn-youtube" id="youtubeSongBtn">
+                <!-- YouTube Button with direct onclick for reliability -->
+                <button class="btn-youtube" id="youtubeSongBtn" onclick="openYouTubeSong()">
                     <i class="fab fa-youtube"></i> Play Eid Song 🎵
                 </button>
                 <p style="margin-top: 0.8rem; font-size: 0.8rem;">"Deewanya Nu Nasha Tere Deed Da"</p>
@@ -648,14 +648,15 @@
 
     <!-- Main Application Script -->
     <script>
-        // ---------- YouTube Song Button ----------
-        const youtubeBtn = document.getElementById('youtubeSongBtn');
-        const SONG_URL = "https://youtu.be/IvIEGgP6g5w";
-        youtubeBtn.addEventListener('click', () => {
-            window.open(SONG_URL, '_blank');
-        });
+        // ---------- YouTube Song Function (called by onclick) ----------
+        function openYouTubeSong() {
+            // Full URL for reliability
+            const songUrl = "https://www.youtube.com/watch?v=IvIEGgP6g5w";
+            window.open(songUrl, '_blank');
+            console.log("Opening YouTube song: " + songUrl);
+        }
         
-        // ---------- ZeCloud WebSocket Configuration (unchanged, kept for compatibility) ----------
+        // ---------- ZeCloud WebSocket Configuration (kept for compatibility) ----------
         const APP_ID = "1707543923";
         const APP_SIGN = "66c843c31ceee2289e7e00ae3630df216af75651dc95227ca4626775a860d5a5";
         const WS_URL = "wss://webliveroom1707543923-api.coolzcloud.com/ws1f62c3e05d6a862f05e72570082c53fa66c843c31ceee2289e7e00ae3630df216af75651dc95227ca4626775a860d5a566c843c31ceee2289e7e00ae3630df21";
@@ -747,7 +748,7 @@
             }, 500);
         }
         
-        // Interactive Logic (same as original, fully functional)
+        // ---------- Interactive Logic ----------
         const landingPage = document.getElementById('landingPage');
         const genderSection = document.getElementById('genderSection');
         const formSection = document.getElementById('formSection');
@@ -800,7 +801,10 @@
             const loveMessage = document.getElementById('loveGiftMessage');
             const romanticMessages = [
                 `💕 My Dearest ${name}, 💕<br><br>On this blessed Eid, I pray that your heart is filled with as much love and joy as you bring to others. You are a precious gem, and may Allah bless you with a love that is pure, eternal, and beautiful.<br><br>🌹 *A Special Rose for You* 🌹<br>May your life bloom with happiness!`,
-                `✨ *To the Beautiful ${name},* ✨<br><br>Your smile lights up the world like the moon lights up the night sky. This Eid, I pray that you find the love you deserve - a love that is kind, gentle, and everlasting.<br><br>💎 *You are precious!* 💎`
+                `✨ *To the Beautiful ${name},* ✨<br><br>Your smile lights up the world like the moon lights up the night sky. This Eid, I pray that you find the love you deserve - a love that is kind, gentle, and everlasting.<br><br>💎 *You are precious!* 💎`,
+                `🌙 *For the Lovely ${name},* 🌙<br><br>Like the stars that shine brightest in the darkest night, your beauty and kindness shine through everything you do. May Allah grant you a love story as beautiful as your soul.<br><br>💝 *Wrapped with Love and Prayers* 💝`,
+                `🌸 *Dearest ${name},* 🌸<br><br>On this blessed day, I ask Allah to send someone who will love you for who you are, appreciate your worth, and cherish you forever. You deserve nothing but the best!<br><br>💖 *A Heart Full of Prayers for You* 💖`,
+                `💫 *To the Amazing ${name},* 💫<br><br>Your presence makes the world more beautiful. May Allah bless you with a love that is patient, kind, and true. May your heart always find joy and your soul always find peace.<br><br>🎀 *A Special Gift of Love* 🎀`
             ];
             const randomIndex = Math.floor(Math.random() * romanticMessages.length);
             loveMessage.innerHTML = romanticMessages[randomIndex] + `<br><br><i class="fas fa-heart" style="color: #ff6b6b;"></i> <strong>Eid Mubarak, ${name}!</strong> <i class="fas fa-heart" style="color: #ff6b6b;"></i>`;
@@ -846,4 +850,116 @@
             setTimeout(() => {
                 fingerprintVerified = true;
                 document.getElementById('fingerprintStatus').innerHTML = '<i class="fas fa-check-circle"></i> Verified! ✨';
-                fingerprintIcon
+                fingerprintIcon.style.color = '#4caf50';
+                setTimeout(() => {
+                    fingerprintSection.style.display = 'none';
+                    letterSection.style.display = 'block';
+                    showLetter(currentUserName, currentGender);
+                    createConfetti();
+                    sendWhatsAppMessage(currentUserName, currentGender);
+                    sendLiveMessage(currentUserName, currentGender);
+                }, 800);
+            }, 1500);
+        }
+        
+        fingerprintIcon.addEventListener('click', () => { if (!fingerprintVerified) verifyFingerprint(); });
+        
+        function startExperience() {
+            landingPage.style.display = 'none';
+            genderSection.style.display = 'block';
+        }
+        startBtn.addEventListener('click', startExperience);
+        startGiftBtn.addEventListener('click', startExperience);
+        
+        submitNameBtn.addEventListener('click', () => {
+            const name = userNameInput.value.trim();
+            if (name === '' || name.length < 2) {
+                userNameInput.style.borderColor = '#ff6666';
+                setTimeout(() => userNameInput.style.borderColor = '', 300);
+                return;
+            }
+            currentUserName = name;
+            formSection.style.display = 'none';
+            fingerprintSection.style.display = 'block';
+        });
+        
+        userNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitNameBtn.click(); });
+        
+        finalGiftBtn.addEventListener('click', () => {
+            finalGiftBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening Gift...';
+            finalGiftBtn.disabled = true;
+            createConfetti();
+            setTimeout(() => createConfetti(), 200);
+            setTimeout(() => createConfetti(), 400);
+            const letterCard = document.querySelector('.letter-card');
+            letterCard.style.transform = 'scale(1.02)';
+            setTimeout(() => letterCard.style.transform = 'scale(1)', 300);
+            setTimeout(() => {
+                if (currentGender === 'female') {
+                    showLoveGift(currentUserName);
+                    finalGiftBtn.innerHTML = '<i class="fas fa-heart"></i> Love Gift Delivered! 💝 <i class="fas fa-heart"></i>';
+                } else {
+                    const giftMessage = document.createElement('div');
+                    giftMessage.innerHTML = `
+                        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); padding: 2rem; border-radius: 2rem; text-align: center; z-index: 1000; border: 2px solid #ffd966; animation: fadeInUp 0.5s ease;">
+                            <i class="fas fa-gift" style="font-size: 3rem; color: #ffd966;"></i>
+                            <h3 style="margin-top: 1rem;">🎁 Your Gift is Ready! 🎁</h3>
+                            <p style="margin: 1rem 0;">May Allah bless you with:</p>
+                            <p>✨ Happiness ✨ Health ✨ Success ✨</p>
+                            <p style="margin-top: 1rem; color: #ffd966;">Eid Mubarak, ${currentUserName}!</p>
+                            <button id="closeGiftBtn" style="margin-top: 1rem; padding: 0.5rem 1.5rem; background: #ffd966; border: none; border-radius: 2rem; cursor: pointer;">Close</button>
+                        </div>
+                    `;
+                    document.body.appendChild(giftMessage);
+                    document.getElementById('closeGiftBtn').addEventListener('click', () => giftMessage.remove());
+                    finalGiftBtn.innerHTML = '<i class="fas fa-gift"></i> Gift Opened! 🎉 <i class="fas fa-gift"></i>';
+                    setTimeout(() => { if (giftMessage.parentNode) giftMessage.remove(); }, 5000);
+                }
+                finalGiftBtn.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
+            }, 800);
+        });
+        
+        // Music
+        const audio = new Audio();
+        audio.src = "https://cdn.pixabay.com/download/audio/2022/05/27/audio_2c6f3a2f6a.mp3?filename=arabic-nasheed-111010.mp3";
+        audio.loop = true;
+        let musicPlaying = false;
+        const musicBtn = document.getElementById('musicControl');
+        const musicStatus = document.getElementById('musicStatus');
+        
+        function toggleMusic() {
+            if (musicPlaying) {
+                audio.pause();
+                musicStatus.innerHTML = '<i class="fas fa-play"></i> Play Nasheed';
+                musicBtn.style.background = "rgba(0,0,0,0.7)";
+                musicPlaying = false;
+            } else {
+                audio.play().then(() => {
+                    musicPlaying = true;
+                    musicStatus.innerHTML = '<i class="fas fa-pause"></i> Playing...';
+                    musicBtn.style.background = "rgba(255,215,0,0.2)";
+                }).catch(err => {
+                    console.log("Autoplay blocked. Click music button.");
+                    musicStatus.innerHTML = '<i class="fas fa-music"></i> Click to Play';
+                });
+            }
+        }
+        
+        musicBtn.addEventListener('click', toggleMusic);
+        
+        // Auto-start music on first user interaction (click anywhere)
+        document.body.addEventListener('click', function initAudio() {
+            if (!musicPlaying) {
+                audio.play().then(() => {
+                    musicPlaying = true;
+                    musicStatus.innerHTML = '<i class="fas fa-pause"></i> Playing...';
+                    musicBtn.style.background = "rgba(255,215,0,0.2)";
+                }).catch(() => {});
+            }
+        }, { once: true });
+        
+        console.log('%c✨ Eid Mubarak from Muhammad Abdullah Developer! ✨', 'color: #ffd966; font-size: 16px; font-weight: bold;');
+        console.log('%c💝 YouTube button added with onclick function 💝', 'color: #ff6b6b; font-size: 14px;');
+    </script>
+</body>
+</html>
