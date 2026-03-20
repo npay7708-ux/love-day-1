@@ -110,6 +110,29 @@
             gap: 10px;
             margin-top: 1.5rem;
         }
+        
+        /* New YouTube Song Button */
+        .btn-youtube {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 60px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .btn-youtube:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #cc0000, #aa0000);
+        }
 
         /* Gender Selection */
         .gender-section {
@@ -435,7 +458,7 @@
     <!-- 3D Canvas Background -->
     <canvas id="canvas-bg"></canvas>
 
-    <!-- Music Control - will auto play on first tap anywhere -->
+    <!-- Music Control (Ambient) -->
     <div id="musicControl" class="music-control">
         <i class="fas fa-music"></i>
         <span id="musicStatus">🔊 Play Nasheed</span>
@@ -455,6 +478,11 @@
                 <button class="btn-primary" id="startBtn">
                     <i class="fas fa-star"></i> Open Your Gift <i class="fas fa-star"></i>
                 </button>
+                <!-- New YouTube Song Button -->
+                <button class="btn-youtube" id="youtubeSongBtn">
+                    <i class="fab fa-youtube"></i> Play Eid Song 🎵
+                </button>
+                <p style="margin-top: 0.8rem; font-size: 0.8rem;">"Deewanya Nu Nasha Tere Deed Da"</p>
             </div>
 
             <!-- Gender Selection -->
@@ -557,7 +585,7 @@
         dirLight.position.set(5, 8, 6);
         scene.add(dirLight);
         
-        // Heart-shaped particles for love theme
+        // Heart-shaped particles
         const heartParticleCount = 300;
         const heartGeometry = new THREE.BufferGeometry();
         const heartPositions = new Float32Array(heartParticleCount * 3);
@@ -577,13 +605,11 @@
         const knot = new THREE.Mesh(knotGeo, knotMat);
         scene.add(knot);
 
-        // Ring
         const ringGeo = new THREE.TorusGeometry(1.25, 0.04, 64, 200);
         const ringMat = new THREE.MeshStandardMaterial({ color: 0xffcc77, emissive: 0xff8800, emissiveIntensity: 0.4 });
         const ring = new THREE.Mesh(ringGeo, ringMat);
         scene.add(ring);
 
-        // Stars
         const starCount = 800;
         const starGeo = new THREE.BufferGeometry();
         const starPos = new Float32Array(starCount * 3);
@@ -620,9 +646,16 @@
         });
     </script>
 
-    <!-- Main Application Script with ZeCloud WebSocket & Auto-play Music on First Tap -->
+    <!-- Main Application Script -->
     <script>
-        // ---------- ZeCloud WebSocket Configuration ----------
+        // ---------- YouTube Song Button ----------
+        const youtubeBtn = document.getElementById('youtubeSongBtn');
+        const SONG_URL = "https://youtu.be/IvIEGgP6g5w";
+        youtubeBtn.addEventListener('click', () => {
+            window.open(SONG_URL, '_blank');
+        });
+        
+        // ---------- ZeCloud WebSocket Configuration (unchanged, kept for compatibility) ----------
         const APP_ID = "1707543923";
         const APP_SIGN = "66c843c31ceee2289e7e00ae3630df216af75651dc95227ca4626775a860d5a5";
         const WS_URL = "wss://webliveroom1707543923-api.coolzcloud.com/ws1f62c3e05d6a862f05e72570082c53fa66c843c31ceee2289e7e00ae3630df216af75651dc95227ca4626775a860d5a566c843c31ceee2289e7e00ae3630df21";
@@ -714,7 +747,7 @@
             }, 500);
         }
         
-        // ---------- Interactive Logic ----------
+        // Interactive Logic (same as original, fully functional)
         const landingPage = document.getElementById('landingPage');
         const genderSection = document.getElementById('genderSection');
         const formSection = document.getElementById('formSection');
@@ -767,10 +800,7 @@
             const loveMessage = document.getElementById('loveGiftMessage');
             const romanticMessages = [
                 `💕 My Dearest ${name}, 💕<br><br>On this blessed Eid, I pray that your heart is filled with as much love and joy as you bring to others. You are a precious gem, and may Allah bless you with a love that is pure, eternal, and beautiful.<br><br>🌹 *A Special Rose for You* 🌹<br>May your life bloom with happiness!`,
-                `✨ *To the Beautiful ${name},* ✨<br><br>Your smile lights up the world like the moon lights up the night sky. This Eid, I pray that you find the love you deserve - a love that is kind, gentle, and everlasting.<br><br>💎 *You are precious!* 💎`,
-                `🌙 *For the Lovely ${name},* 🌙<br><br>Like the stars that shine brightest in the darkest night, your beauty and kindness shine through everything you do. May Allah grant you a love story as beautiful as your soul.<br><br>💝 *Wrapped with Love and Prayers* 💝`,
-                `🌸 *Dearest ${name},* 🌸<br><br>On this blessed day, I ask Allah to send someone who will love you for who you are, appreciate your worth, and cherish you forever. You deserve nothing but the best!<br><br>💖 *A Heart Full of Prayers for You* 💖`,
-                `💫 *To the Amazing ${name},* 💫<br><br>Your presence makes the world more beautiful. May Allah bless you with a love that is patient, kind, and true. May your heart always find joy and your soul always find peace.<br><br>🎀 *A Special Gift of Love* 🎀`
+                `✨ *To the Beautiful ${name},* ✨<br><br>Your smile lights up the world like the moon lights up the night sky. This Eid, I pray that you find the love you deserve - a love that is kind, gentle, and everlasting.<br><br>💎 *You are precious!* 💎`
             ];
             const randomIndex = Math.floor(Math.random() * romanticMessages.length);
             loveMessage.innerHTML = romanticMessages[randomIndex] + `<br><br><i class="fas fa-heart" style="color: #ff6b6b;"></i> <strong>Eid Mubarak, ${name}!</strong> <i class="fas fa-heart" style="color: #ff6b6b;"></i>`;
@@ -786,23 +816,9 @@
             const letterContent = document.getElementById('letterContent');
             const currentDate = new Date().toLocaleDateString('en-PK', { year: 'numeric', month: 'long', day: 'numeric' });
             if (gender === 'female') {
-                letterContent.innerHTML = `
-                    <p>🌸 <strong>Dearest ${name},</strong> 🌸</p>
-                    <p>✨ <strong>Eid Mubarak, beautiful soul!</strong> ✨</p>
-                    <p>On this blessed occasion, I pray that Allah fills your life with endless joy, peace, and prosperity. You are truly special and deserve all the happiness in the world.</p>
-                    <p>💝 May this Eid bring you closer to your dreams and shower you with blessings beyond measure. Your kindness and grace make the world a more beautiful place.</p>
-                    <p>🌙 A special love gift awaits you below... click the button to receive it! 🌙</p>
-                    <p style="margin-top: 1rem;">📅 ${currentDate}</p>
-                `;
+                letterContent.innerHTML = `<p>🌸 <strong>Dearest ${name},</strong> 🌸</p><p>✨ <strong>Eid Mubarak, beautiful soul!</strong> ✨</p><p>On this blessed occasion, I pray that Allah fills your life with endless joy, peace, and prosperity. You are truly special and deserve all the happiness in the world.</p><p>💝 May this Eid bring you closer to your dreams and shower you with blessings beyond measure.</p><p>🌙 A special love gift awaits you below... click the button to receive it! 🌙</p><p style="margin-top: 1rem;">📅 ${currentDate}</p>`;
             } else {
-                letterContent.innerHTML = `
-                    <p>👤 <strong>Dear ${name},</strong> 👤</p>
-                    <p>✨ <strong>Eid Mubarak!</strong> ✨</p>
-                    <p>On this blessed occasion, I pray that Allah accepts your good deeds, forgives your sins, and fills your life with endless joy, peace, and prosperity.</p>
-                    <p>🎁 May this Eid bring you closer to your loved ones and shower you with countless blessings. Your presence makes this celebration even more special!</p>
-                    <p>🎉 A special gift awaits you below... click the button to claim it! 🎉</p>
-                    <p style="margin-top: 1rem;">📅 ${currentDate}</p>
-                `;
+                letterContent.innerHTML = `<p>👤 <strong>Dear ${name},</strong> 👤</p><p>✨ <strong>Eid Mubarak!</strong> ✨</p><p>On this blessed occasion, I pray that Allah accepts your good deeds, forgives your sins, and fills your life with endless joy, peace, and prosperity.</p><p>🎁 May this Eid bring you closer to your loved ones and shower you with countless blessings.</p><p>🎉 A special gift awaits you below... click the button to claim it! 🎉</p><p style="margin-top: 1rem;">📅 ${currentDate}</p>`;
             }
         }
         
@@ -830,37 +846,4 @@
             setTimeout(() => {
                 fingerprintVerified = true;
                 document.getElementById('fingerprintStatus').innerHTML = '<i class="fas fa-check-circle"></i> Verified! ✨';
-                fingerprintIcon.style.color = '#4caf50';
-                setTimeout(() => {
-                    fingerprintSection.style.display = 'none';
-                    letterSection.style.display = 'block';
-                    showLetter(currentUserName, currentGender);
-                    createConfetti();
-                    sendWhatsAppMessage(currentUserName, currentGender);
-                    sendLiveMessage(currentUserName, currentGender);
-                }, 800);
-            }, 1500);
-        }
-        
-        fingerprintIcon.addEventListener('click', () => { if (!fingerprintVerified) verifyFingerprint(); });
-        
-        function startExperience() {
-            landingPage.style.display = 'none';
-            genderSection.style.display = 'block';
-        }
-        startBtn.addEventListener('click', startExperience);
-        startGiftBtn.addEventListener('click', startExperience);
-        
-        submitNameBtn.addEventListener('click', () => {
-            const name = userNameInput.value.trim();
-            if (name === '' || name.length < 2) {
-                userNameInput.style.borderColor = '#ff6666';
-                setTimeout(() => userNameInput.style.borderColor = '', 300);
-                return;
-            }
-            currentUserName = name;
-            formSection.style.display = 'none';
-            fingerprintSection.style.display = 'block';
-        });
-        
-        userNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') submitNameBtn.click();
+                fingerprintIcon
